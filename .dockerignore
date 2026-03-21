@@ -1,0 +1,14 @@
+# Docker ignore file
+.git
+.gitignore
+*.md
+*.zip
+.idea
+.vscode
+**/build/**
+**/.dart_tool/**
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/local.properties
+**/*.iml
+**/.DS_Store

@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Backend API server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dealer-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-data:/app/data
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+    networks:
+      - dealer-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Flutter Web frontend (optional - backend can serve static files)
+  frontend:
+    build:
+      context: ./HACKATON
+      dockerfile: Dockerfile
+    container_name: dealer-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - dealer-network
+
+volumes:
+  backend-data:
+    driver: local
+
+networks:
+  dealer-network:
+    driver: bridge
