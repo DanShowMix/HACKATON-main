@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:sqlite3/sqlite3.dart';
 import '../database/database_helper.dart';
 import '../models/employee.dart';
 import '../models/models.dart';
@@ -431,6 +431,24 @@ class RatingRepository {
     return _rowToRating(results.first);
   }
 
+  Future<RatingDetail> create(RatingDetail rating) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO rating_details (id, employee_id, volume_points, deals_points, bank_share_points, products_points, total_points, calculated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      rating.id,
+      rating.employeeId,
+      rating.volumePoints,
+      rating.dealsPoints,
+      rating.bankSharePoints,
+      rating.productsPoints,
+      rating.totalPoints,
+      rating.calculatedAt.toIso8601String(),
+    ]);
+    return rating;
+  }
+
   RatingDetail _rowToRating(Map<String, Object?> row) {
     return RatingDetail(
       id: row['id'] as String,
@@ -441,6 +459,122 @@ class RatingRepository {
       productsPoints: row['products_points'] as int,
       totalPoints: row['total_points'] as int,
       calculatedAt: DateTime.parse(row['calculated_at'] as String),
+    );
+  }
+}
+
+/// Repository for financial effects
+class FinancialEffectRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<FinancialEffect?> getByEmployeeId(String employeeId) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM financial_effects WHERE employee_id = ? ORDER BY calculated_at DESC LIMIT 1',
+      [employeeId],
+    );
+    if (results.isEmpty) return null;
+    return _rowToFinancialEffect(results.first);
+  }
+
+  Future<FinancialEffect> create(FinancialEffect effect) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO financial_effects (id, employee_id, bonus_income, mortgage_savings, cashback, dms_cost, total_benefit, period, calculated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      effect.id,
+      effect.employeeId,
+      effect.bonusIncome,
+      effect.mortgageSavings,
+      effect.cashback,
+      effect.dmsCost,
+      effect.totalBenefit,
+      effect.period,
+      effect.calculatedAt.toIso8601String(),
+    ]);
+    return effect;
+  }
+
+  FinancialEffect _rowToFinancialEffect(Map<String, Object?> row) {
+    return FinancialEffect(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      bonusIncome: row['bonus_income'] as int,
+      mortgageSavings: row['mortgage_savings'] as int,
+      cashback: row['cashback'] as int,
+      dmsCost: row['dms_cost'] as int,
+      totalBenefit: row['total_benefit'] as int,
+      period: row['period'] as String? ?? '2026',
+      calculatedAt: DateTime.parse(row['calculated_at'] as String),
+    );
+  }
+}
+
+/// Repository for monthly tasks
+class MonthlyTaskRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<List<MonthlyTask>> getByEmployeeId(String employeeId) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM monthly_tasks WHERE employee_id = ? ORDER BY is_completed, deadline',
+      [employeeId],
+    );
+    return results.map(_rowToTask).toList();
+  }
+
+  Future<MonthlyTask> create(MonthlyTask task) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO monthly_tasks (id, employee_id, title, description, reward_points, target_value, current_value, deadline, is_completed)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      task.id,
+      task.employeeId,
+      task.title,
+      task.description,
+      task.rewardPoints,
+      task.targetValue,
+      task.currentValue,
+      task.deadline,
+      task.isCompleted ? 1 : 0,
+    ]);
+    return task;
+  }
+
+  Future<MonthlyTask> update(MonthlyTask task) async {
+    final db = _db.database;
+    db.execute('''
+      UPDATE monthly_tasks SET
+        title = ?, description = ?, reward_points = ?, target_value = ?,
+        current_value = ?, deadline = ?, is_completed = ?
+      WHERE id = ?
+    ''', [
+      task.title,
+      task.description,
+      task.rewardPoints,
+      task.targetValue,
+      task.currentValue,
+      task.deadline,
+      task.isCompleted ? 1 : 0,
+      task.id,
+    ]);
+    return task;
+  }
+
+  MonthlyTask _rowToTask(Map<String, Object?> row) {
+    return MonthlyTask(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      title: row['title'] as String,
+      description: row['description'] as String,
+      rewardPoints: row['reward_points'] as int,
+      targetValue: row['target_value'] as int,
+      currentValue: row['current_value'] as int,
+      deadline: row['deadline'] as String? ?? '',
+      isCompleted: (row['is_completed'] as int) == 1,
+      createdAt: DateTime.parse(row['created_at'] as String),
     );
   }
 }

@@ -373,8 +373,125 @@ class RatingDetail {
       bankSharePoints: json['bankSharePoints'] as int? ?? 0,
       productsPoints: json['productsPoints'] as int? ?? 0,
       totalPoints: json['totalPoints'] as int? ?? 0,
-      calculatedAt: json['calculatedAt'] != null 
-          ? DateTime.parse(json['calculatedAt'] as String) 
+      calculatedAt: json['calculatedAt'] != null
+          ? DateTime.parse(json['calculatedAt'] as String)
+          : DateTime.now(),
+    );
+  }
+}
+
+/// FinancialEffect model - личный финансовый эффект сотрудника
+class FinancialEffect {
+  final String id;
+  final String employeeId;
+  final int bonusIncome; // Доп. доход от бонусов
+  final int mortgageSavings; // Экономия по ипотеке
+  final int cashback; // Кэшбэк
+  final int dmsCost; // Стоимость ДМС
+  final int totalBenefit; // Общая выгода
+  final String period; // Период (например, "2026")
+  final DateTime calculatedAt;
+
+  FinancialEffect({
+    required this.id,
+    required this.employeeId,
+    this.bonusIncome = 0,
+    this.mortgageSavings = 0,
+    this.cashback = 0,
+    this.dmsCost = 0,
+    this.totalBenefit = 0,
+    this.period = '2026',
+    DateTime? calculatedAt,
+  }) : calculatedAt = calculatedAt ?? DateTime.now();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'bonusIncome': bonusIncome,
+      'mortgageSavings': mortgageSavings,
+      'cashback': cashback,
+      'dmsCost': dmsCost,
+      'totalBenefit': totalBenefit,
+      'period': period,
+      'calculatedAt': calculatedAt.toIso8601String(),
+    };
+  }
+
+  factory FinancialEffect.fromJson(Map<String, dynamic> json) {
+    return FinancialEffect(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      bonusIncome: json['bonusIncome'] as int? ?? 0,
+      mortgageSavings: json['mortgageSavings'] as int? ?? 0,
+      cashback: json['cashback'] as int? ?? 0,
+      dmsCost: json['dmsCost'] as int? ?? 0,
+      totalBenefit: json['totalBenefit'] as int? ?? 0,
+      period: json['period'] as String? ?? '2026',
+      calculatedAt: json['calculatedAt'] != null
+          ? DateTime.parse(json['calculatedAt'] as String)
+          : DateTime.now(),
+    );
+  }
+}
+
+/// MonthlyTask model - задача месяца
+class MonthlyTask {
+  final String id;
+  final String employeeId;
+  final String title;
+  final String description;
+  final int rewardPoints; // Награда в баллах
+  final int targetValue; // Целевое значение
+  final int currentValue; // Текущий прогресс
+  final String deadline; // Дедлайн (например, "31 марта 2026")
+  final bool isCompleted;
+  final DateTime createdAt;
+
+  MonthlyTask({
+    required this.id,
+    required this.employeeId,
+    required this.title,
+    required this.description,
+    this.rewardPoints = 0,
+    this.targetValue = 0,
+    this.currentValue = 0,
+    this.deadline = '',
+    this.isCompleted = false,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  double get progressPercent => targetValue > 0 ? (currentValue / targetValue) * 100 : 0;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'title': title,
+      'description': description,
+      'rewardPoints': rewardPoints,
+      'targetValue': targetValue,
+      'currentValue': currentValue,
+      'progressPercent': progressPercent,
+      'deadline': deadline,
+      'isCompleted': isCompleted,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory MonthlyTask.fromJson(Map<String, dynamic> json) {
+    return MonthlyTask(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String,
+      rewardPoints: json['rewardPoints'] as int? ?? 0,
+      targetValue: json['targetValue'] as int? ?? 0,
+      currentValue: json['currentValue'] as int? ?? 0,
+      deadline: json['deadline'] as String? ?? '',
+      isCompleted: json['isCompleted'] as bool? ?? false,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
     );
   }

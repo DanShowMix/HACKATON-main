@@ -296,6 +296,34 @@ class ApiService {
       return 'Спасибо за обращение! Специалист ответит в течение 5 минут.';
     }
   }
+
+  // ==================== FINANCIAL EFFECT ====================
+
+  /// Get financial effect
+  Future<Map<String, dynamic>> getFinancialEffect() async {
+    final result = await _get('/financial-effect');
+    return result as Map<String, dynamic>;
+  }
+
+  // ==================== MONTHLY TASKS ====================
+
+  /// Get monthly tasks
+  Future<List<Map<String, dynamic>>> getMonthlyTasks() async {
+    final result = await _get('/monthly-tasks');
+    return (result as List).map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  /// Create monthly task
+  Future<Map<String, dynamic>> createMonthlyTask(Map<String, dynamic> task) async {
+    final result = await _post('/monthly-tasks', task);
+    return result as Map<String, dynamic>;
+  }
+
+  /// Update monthly task
+  Future<Map<String, dynamic>> updateMonthlyTask(Map<String, dynamic> task) async {
+    final result = await _put('/monthly-tasks', task);
+    return result as Map<String, dynamic>;
+  }
 }
 
 /// API Exception

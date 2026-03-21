@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:sqlite3/sqlite3.dart';
 
 /// Database helper class for managing SQLite connections
@@ -189,6 +188,39 @@ class DatabaseHelper {
         FOREIGN KEY (employee_id) REFERENCES employees(id)
       )
     ''');
+
+    // Financial effects table
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS financial_effects (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        bonus_income INTEGER DEFAULT 0,
+        mortgage_savings INTEGER DEFAULT 0,
+        cashback INTEGER DEFAULT 0,
+        dms_cost INTEGER DEFAULT 0,
+        total_benefit INTEGER DEFAULT 0,
+        period TEXT DEFAULT '2026',
+        calculated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id)
+      )
+    ''');
+
+    // Monthly tasks table
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS monthly_tasks (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        reward_points INTEGER DEFAULT 0,
+        target_value INTEGER DEFAULT 0,
+        current_value INTEGER DEFAULT 0,
+        deadline TEXT,
+        is_completed INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id)
+      )
+    ''');
   }
 
   /// Seed initial data for demo purposes (only if empty)
@@ -347,6 +379,21 @@ class DatabaseHelper {
         ('msg-001', 'emp-001', 'Здравствуйте! Чем могу помочь?', 0, 'read'),
         ('msg-002', 'emp-001', 'Как получить доступ к новым продуктам?', 1, 'read'),
         ('msg-003', 'emp-001', 'Для доступа к новым продуктам необходимо пройти обучение и сертификацию', 0, 'read')
+    ''');
+
+    // Insert financial effects for emp-001
+    db.execute('''
+      INSERT INTO financial_effects (id, employee_id, bonus_income, mortgage_savings, cashback, dms_cost, total_benefit, period)
+      VALUES ('fe-001', 'emp-001', 150000, 120000, 24400, 18000, 312400, '2026')
+    ''');
+
+    // Insert monthly tasks for emp-001
+    db.execute('''
+      INSERT INTO monthly_tasks (id, employee_id, title, description, reward_points, target_value, current_value, deadline, is_completed)
+      VALUES 
+        ('task-001', 'emp-001', 'Сделать 3 сделки', 'Оформите и получите одобрение по 3 сделкам', 4, 3, 1, '31 марта 2026', 0),
+        ('task-002', 'emp-001', 'Увеличить долю банка до 50%', 'Доведите долю банка в сделках до 50%', 6, 50, 35, '31 марта 2026', 0),
+        ('task-003', 'emp-001', 'Продать 2 доп. продукта', 'Подключите 2 дополнительных продукта к сделкам', 3, 2, 0, '31 марта 2026', 0)
     ''');
   }
 

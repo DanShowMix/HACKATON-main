@@ -9,6 +9,8 @@ import 'screens/profile_screen.dart';
 import 'screens/achievements_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/support_screen.dart';
+import 'screens/financial_effect_screen.dart';
+import 'screens/monthly_tasks_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,8 +55,8 @@ class DealerApp extends StatelessWidget {
           ),
         ),
       ),
-      home: ApiService().isAuthenticated 
-          ? const MainNavigation() 
+      home: ApiService().isAuthenticated
+          ? const MainNavigation()
           : const LoginScreen(),
       routes: {
         '/calculator': (context) => const CalculatorScreen(),
@@ -63,6 +65,8 @@ class DealerApp extends StatelessWidget {
         '/achievements': (context) => const AchievementsScreen(),
         '/products': (context) => const ProductsScreen(),
         '/support': (context) => const SupportScreen(),
+        '/financial-effect': (context) => const FinancialEffectScreen(),
+        '/monthly-tasks': (context) => const MonthlyTasksScreen(),
       },
     );
   }

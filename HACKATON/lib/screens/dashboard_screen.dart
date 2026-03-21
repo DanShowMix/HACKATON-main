@@ -5,6 +5,8 @@ import 'status_screen.dart';
 import 'rating_screen.dart';
 import 'daily_screen.dart';
 import 'notifications_screen.dart';
+import 'financial_effect_screen.dart';
+import 'monthly_tasks_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -377,6 +379,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const StatusScreen()),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    'Фин. эффект',
+                    Icons.account_balance_wallet,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FinancialEffectScreen()),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    'Задачи',
+                    Icons.task,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MonthlyTasksScreen()),
                     ),
                   ),
                 ),

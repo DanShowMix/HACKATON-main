@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:uuid/uuid.dart';
 import '../repositories/repositories.dart';
 import '../models/employee.dart';
+import '../models/models.dart';
 import '../utils/response_helpers.dart';
 
 const _uuid = Uuid();
@@ -11,7 +11,8 @@ const _uuid = Uuid();
 class AuthHandler {
   static final UserRepository _userRepo = UserRepository();
   static final EmployeeRepository _employeeRepo = EmployeeRepository();
-  
+  static final RatingRepository _ratingRepo = RatingRepository();
+
   // Mock authenticated user ID
   static String? _authenticatedUserId;
 
@@ -31,7 +32,7 @@ class AuthHandler {
 
       // Find user by email
       final user = await _userRepo.getByEmail(email);
-      
+
       if (user == null) {
         return unauthorized('Invalid email or password');
       }
@@ -117,6 +118,19 @@ class AuthHandler {
       );
 
       await _userRepo.create(user);
+
+      // Create rating details with zero points for new employee
+      final ratingDetail = RatingDetail(
+        id: 'rating-${_uuid.v4()}',
+        employeeId: employee.id,
+        volumePoints: 0,
+        dealsPoints: 0,
+        bankSharePoints: 0,
+        productsPoints: 0,
+        totalPoints: 0,
+        calculatedAt: DateTime.now(),
+      );
+      await _ratingRepo.create(ratingDetail);
 
       // Auto-login after registration
       _authenticatedUserId = employee.id;

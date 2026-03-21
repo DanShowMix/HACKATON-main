@@ -14,6 +14,8 @@ import '../handlers/notification_handler.dart';
 import '../handlers/product_handler.dart';
 import '../handlers/chat_handler.dart';
 import '../handlers/rating_handler.dart';
+import '../handlers/financial_effect_handler.dart';
+import '../handlers/monthly_tasks_handler.dart';
 
 /// Main API server using Shelf framework
 class ApiServer {
@@ -80,6 +82,14 @@ class ApiServer {
 
     // Rating routes
     router.get('/api/rating', RatingHandler.getDetails);
+
+    // Financial effect routes
+    router.get('/api/financial-effect', FinancialEffectHandler.getEffect);
+
+    // Monthly tasks routes
+    router.get('/api/monthly-tasks', MonthlyTasksHandler.getTasks);
+    router.post('/api/monthly-tasks', MonthlyTasksHandler.createTask);
+    router.put('/api/monthly-tasks', MonthlyTasksHandler.updateTask);
 
     // Static files for Flutter Web
     router.get('/', (Request req) => _serveStaticFile('index.html'));
