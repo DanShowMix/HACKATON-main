@@ -14,8 +14,8 @@ import '../handlers/notification_handler.dart';
 import '../handlers/product_handler.dart';
 import '../handlers/chat_handler.dart';
 import '../handlers/rating_handler.dart';
-import '../handlers/financial_effect_handler.dart';
 import '../handlers/monthly_tasks_handler.dart';
+import '../handlers/new_rating_handler.dart';
 
 /// Main API server using Shelf framework
 class ApiServer {
@@ -80,11 +80,12 @@ class ApiServer {
     router.get('/api/chat', ChatHandler.history);
     router.post('/api/chat', ChatHandler.send);
 
-    // Rating routes
-    router.get('/api/rating', RatingHandler.getDetails);
+    // Rating routes (new formula)
+    router.get('/api/rating', NewRatingHandler.getCurrentRating);
+    router.get('/api/rating/old', RatingHandler.getDetails);
 
-    // Financial effect routes
-    router.get('/api/financial-effect', FinancialEffectHandler.getEffect);
+    // Financial effect routes (new calculation)
+    router.get('/api/financial-effect', NewRatingHandler.getFinancialEffect);
 
     // Monthly tasks routes
     router.get('/api/monthly-tasks', MonthlyTasksHandler.getTasks);

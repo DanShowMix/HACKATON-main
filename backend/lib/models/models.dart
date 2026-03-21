@@ -496,3 +496,282 @@ class MonthlyTask {
     );
   }
 }
+
+/// MonthlyPlan model - планы на месяц
+class MonthlyPlan {
+  final String id;
+  final String employeeId;
+  final String month;
+  final double volumePlan;
+  final int dealsPlan;
+  final double bankShareTarget;
+
+  MonthlyPlan({
+    required this.id,
+    required this.employeeId,
+    required this.month,
+    this.volumePlan = 10.0,
+    this.dealsPlan = 10,
+    this.bankShareTarget = 50.0,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'month': month,
+      'volumePlan': volumePlan,
+      'dealsPlan': dealsPlan,
+      'bankShareTarget': bankShareTarget,
+    };
+  }
+
+  factory MonthlyPlan.fromJson(Map<String, dynamic> json) {
+    return MonthlyPlan(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      month: json['month'] as String,
+      volumePlan: (json['volumePlan'] as num?)?.toDouble() ?? 10.0,
+      dealsPlan: json['dealsPlan'] as int? ?? 10,
+      bankShareTarget: (json['bankShareTarget'] as num?)?.toDouble() ?? 50.0,
+    );
+  }
+}
+
+/// LoanApplication model - заявка на кредит
+class LoanApplication {
+  final String id;
+  final String employeeId;
+  final String clientName;
+  final String productType;
+  final double? amount;
+  final String status; // submitted, approved, rejected
+
+  LoanApplication({
+    required this.id,
+    required this.employeeId,
+    required this.clientName,
+    required this.productType,
+    this.amount,
+    this.status = 'submitted',
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'clientName': clientName,
+      'productType': productType,
+      'amount': amount,
+      'status': status,
+    };
+  }
+
+  factory LoanApplication.fromJson(Map<String, dynamic> json) {
+    return LoanApplication(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      clientName: json['clientName'] as String,
+      productType: json['productType'] as String,
+      amount: (json['amount'] as num?)?.toDouble(),
+      status: json['status'] as String? ?? 'submitted',
+    );
+  }
+}
+
+/// MonthlyRating model - ежемесячный рейтинг
+class MonthlyRating {
+  final String id;
+  final String employeeId;
+  final String month;
+  final double volumeFact;
+  final double volumePlan;
+  final double volumeIndex;
+  final int dealsFact;
+  final int dealsPlan;
+  final double dealsIndex;
+  final double bankShareFact;
+  final double bankShareTarget;
+  final double bankShareIndex;
+  final double conversionRate;
+  final double conversionIndex;
+  final double totalScore;
+  final String level;
+
+  MonthlyRating({
+    required this.id,
+    required this.employeeId,
+    required this.month,
+    this.volumeFact = 0,
+    this.volumePlan = 10,
+    this.volumeIndex = 0,
+    this.dealsFact = 0,
+    this.dealsPlan = 10,
+    this.dealsIndex = 0,
+    this.bankShareFact = 0,
+    this.bankShareTarget = 50,
+    this.bankShareIndex = 0,
+    this.conversionRate = 0,
+    this.conversionIndex = 0,
+    this.totalScore = 0,
+    this.level = 'Silver',
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'month': month,
+      'volume': {
+        'fact': volumeFact,
+        'plan': volumePlan,
+        'index': volumeIndex,
+      },
+      'deals': {
+        'fact': dealsFact,
+        'plan': dealsPlan,
+        'index': dealsIndex,
+      },
+      'bankShare': {
+        'fact': bankShareFact,
+        'target': bankShareTarget,
+        'index': bankShareIndex,
+      },
+      'conversion': {
+        'rate': conversionRate,
+        'index': conversionIndex,
+      },
+      'totalScore': totalScore,
+      'level': level,
+    };
+  }
+
+  factory MonthlyRating.fromJson(Map<String, dynamic> json) {
+    return MonthlyRating(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      month: json['month'] as String,
+      volumeFact: (json['volumeFact'] as num?)?.toDouble() ?? 0,
+      volumePlan: (json['volumePlan'] as num?)?.toDouble() ?? 10,
+      volumeIndex: (json['volumeIndex'] as num?)?.toDouble() ?? 0,
+      dealsFact: json['dealsFact'] as int? ?? 0,
+      dealsPlan: json['dealsPlan'] as int? ?? 10,
+      dealsIndex: (json['dealsIndex'] as num?)?.toDouble() ?? 0,
+      bankShareFact: (json['bankShareFact'] as num?)?.toDouble() ?? 0,
+      bankShareTarget: (json['bankShareTarget'] as num?)?.toDouble() ?? 50,
+      bankShareIndex: (json['bankShareIndex'] as num?)?.toDouble() ?? 0,
+      conversionRate: (json['conversionRate'] as num?)?.toDouble() ?? 0,
+      conversionIndex: (json['conversionIndex'] as num?)?.toDouble() ?? 0,
+      totalScore: (json['totalScore'] as num?)?.toDouble() ?? 0,
+      level: json['level'] as String? ?? 'Silver',
+    );
+  }
+}
+
+/// EmployeeBenefit model - привилегии сотрудника
+class EmployeeBenefit {
+  final String id;
+  final String employeeId;
+  final bool hasSubscription;
+  final List<String> subscriptionCategories;
+  final double bonusPercent;
+  final bool hasMortgage;
+  final double mortgageRemaining;
+  final double mortgageRate;
+  final double mortgageDiscountPercent;
+  final int dmsCompensation;
+
+  EmployeeBenefit({
+    required this.id,
+    required this.employeeId,
+    this.hasSubscription = false,
+    this.subscriptionCategories = const [],
+    this.bonusPercent = 0,
+    this.hasMortgage = false,
+    this.mortgageRemaining = 0,
+    this.mortgageRate = 0,
+    this.mortgageDiscountPercent = 0,
+    this.dmsCompensation = 0,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'hasSubscription': hasSubscription,
+      'subscriptionCategories': subscriptionCategories,
+      'bonusPercent': bonusPercent,
+      'hasMortgage': hasMortgage,
+      'mortgageRemaining': mortgageRemaining,
+      'mortgageRate': mortgageRate,
+      'mortgageDiscountPercent': mortgageDiscountPercent,
+      'dmsCompensation': dmsCompensation,
+    };
+  }
+
+  factory EmployeeBenefit.fromJson(Map<String, dynamic> json) {
+    return EmployeeBenefit(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      hasSubscription: json['hasSubscription'] as bool? ?? false,
+      subscriptionCategories: json['subscriptionCategories'] != null
+          ? List<String>.from(json['subscriptionCategories'] as List)
+          : [],
+      bonusPercent: (json['bonusPercent'] as num?)?.toDouble() ?? 0,
+      hasMortgage: json['hasMortgage'] as bool? ?? false,
+      mortgageRemaining: (json['mortgageRemaining'] as num?)?.toDouble() ?? 0,
+      mortgageRate: (json['mortgageRate'] as num?)?.toDouble() ?? 0,
+      mortgageDiscountPercent: (json['mortgageDiscountPercent'] as num?)?.toDouble() ?? 0,
+      dmsCompensation: json['dmsCompensation'] as int? ?? 0,
+    );
+  }
+}
+
+/// MonthlyBenefit model - ежемесячная выгода
+class MonthlyBenefit {
+  final String id;
+  final String employeeId;
+  final String month;
+  final int bonusIncome;
+  final int mortgageSavings;
+  final int dmsCompensation;
+  final int totalMonthlyBenefit;
+  int yearTotalBenefit;
+
+  MonthlyBenefit({
+    required this.id,
+    required this.employeeId,
+    required this.month,
+    this.bonusIncome = 0,
+    this.mortgageSavings = 0,
+    this.dmsCompensation = 0,
+    this.totalMonthlyBenefit = 0,
+    this.yearTotalBenefit = 0,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'employeeId': employeeId,
+      'month': month,
+      'bonusIncome': bonusIncome,
+      'mortgageSavings': mortgageSavings,
+      'dmsCompensation': dmsCompensation,
+      'totalMonthlyBenefit': totalMonthlyBenefit,
+      'yearTotalBenefit': yearTotalBenefit,
+    };
+  }
+
+  factory MonthlyBenefit.fromJson(Map<String, dynamic> json) {
+    return MonthlyBenefit(
+      id: json['id'] as String,
+      employeeId: json['employeeId'] as String,
+      month: json['month'] as String,
+      bonusIncome: json['bonusIncome'] as int? ?? 0,
+      mortgageSavings: json['mortgageSavings'] as int? ?? 0,
+      dmsCompensation: json['dmsCompensation'] as int? ?? 0,
+      totalMonthlyBenefit: json['totalMonthlyBenefit'] as int? ?? 0,
+      yearTotalBenefit: json['yearTotalBenefit'] as int? ?? 0,
+    );
+  }
+}

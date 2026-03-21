@@ -174,7 +174,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // Rating details table
+    // Rating details table (old, keeping for compatibility)
     db.execute('''
       CREATE TABLE IF NOT EXISTS rating_details (
         id TEXT PRIMARY KEY,
@@ -186,6 +186,98 @@ class DatabaseHelper {
         total_points INTEGER DEFAULT 0,
         calculated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (employee_id) REFERENCES employees(id)
+      )
+    ''');
+
+    // Monthly plans table - планы для каждого сотрудника
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS monthly_plans (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        month TEXT NOT NULL,
+        volume_plan REAL DEFAULT 10,
+        deals_plan INTEGER DEFAULT 10,
+        bank_share_target REAL DEFAULT 50,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id),
+        UNIQUE(employee_id, month)
+      )
+    ''');
+
+    // Loan applications table - заявки на кредиты для расчёта конверсии
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS loan_applications (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        client_name TEXT NOT NULL,
+        product_type TEXT NOT NULL,
+        amount REAL,
+        status TEXT DEFAULT 'submitted',
+        submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        decided_at TEXT,
+        FOREIGN KEY (employee_id) REFERENCES employees(id)
+      )
+    ''');
+
+    // Monthly ratings table - ежемесячный расчёт рейтинга по новой формуле
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS monthly_ratings (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        month TEXT NOT NULL,
+        volume_fact REAL DEFAULT 0,
+        volume_plan REAL DEFAULT 10,
+        volume_index REAL DEFAULT 0,
+        deals_fact INTEGER DEFAULT 0,
+        deals_plan INTEGER DEFAULT 10,
+        deals_index REAL DEFAULT 0,
+        bank_share_fact REAL DEFAULT 0,
+        bank_share_target REAL DEFAULT 50,
+        bank_share_index REAL DEFAULT 0,
+        conversion_rate REAL DEFAULT 0,
+        conversion_index REAL DEFAULT 0,
+        total_score REAL DEFAULT 0,
+        level TEXT DEFAULT 'Silver',
+        calculated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id),
+        UNIQUE(employee_id, month)
+      )
+    ''');
+
+    // Employee benefits table - привилегии сотрудника (подписка, ипотека, ДМС)
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS employee_benefits (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        has_subscription INTEGER DEFAULT 0,
+        subscription_categories TEXT DEFAULT '[]',
+        bonus_percent REAL DEFAULT 0,
+        has_mortgage INTEGER DEFAULT 0,
+        mortgage_remaining REAL DEFAULT 0,
+        mortgage_rate REAL DEFAULT 0,
+        mortgage_discount_percent REAL DEFAULT 0,
+        dms_compensation INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id)
+      )
+    ''');
+
+    // Monthly benefits calculation - ежемесячный расчёт выгоды
+    db.execute('''
+      CREATE TABLE IF NOT EXISTS monthly_benefits (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        month TEXT NOT NULL,
+        bonus_income INTEGER DEFAULT 0,
+        mortgage_savings INTEGER DEFAULT 0,
+        dms_compensation INTEGER DEFAULT 0,
+        total_monthly_benefit INTEGER DEFAULT 0,
+        year_total_benefit INTEGER DEFAULT 0,
+        calculated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id),
+        UNIQUE(employee_id, month)
       )
     ''');
 
@@ -390,10 +482,53 @@ class DatabaseHelper {
     // Insert monthly tasks for emp-001
     db.execute('''
       INSERT INTO monthly_tasks (id, employee_id, title, description, reward_points, target_value, current_value, deadline, is_completed)
-      VALUES 
+      VALUES
         ('task-001', 'emp-001', 'Сделать 3 сделки', 'Оформите и получите одобрение по 3 сделкам', 4, 3, 1, '31 марта 2026', 0),
         ('task-002', 'emp-001', 'Увеличить долю банка до 50%', 'Доведите долю банка в сделках до 50%', 6, 50, 35, '31 марта 2026', 0),
         ('task-003', 'emp-001', 'Продать 2 доп. продукта', 'Подключите 2 дополнительных продукта к сделкам', 3, 2, 0, '31 марта 2026', 0)
+    ''');
+
+    // Insert monthly plans for emp-001 (March 2026)
+    db.execute('''
+      INSERT INTO monthly_plans (id, employee_id, month, volume_plan, deals_plan, bank_share_target)
+      VALUES ('plan-001', 'emp-001', '2026-03', 10.0, 10, 50.0)
+    ''');
+
+    // Insert loan applications for emp-001 (for conversion calculation)
+    db.execute('''
+      INSERT INTO loan_applications (id, employee_id, client_name, product_type, amount, status, decided_at)
+      VALUES
+        ('app-001', 'emp-001', 'Иванов Пётр', 'Автокредит', 1200000, 'approved', '2026-03-05'),
+        ('app-002', 'emp-001', 'Смирнова Анна', 'Ипотека', 5500000, 'approved', '2026-03-08'),
+        ('app-003', 'emp-001', 'Кузнецов Алексей', 'Потребительский', 500000, 'approved', '2026-03-10'),
+        ('app-004', 'emp-001', 'Попова Мария', 'Рефинансирование', 800000, 'rejected', '2026-03-12'),
+        ('app-005', 'emp-001', 'Васильев Дмитрий', 'Автокредит', 2100000, 'approved', '2026-03-15'),
+        ('app-006', 'emp-001', 'Новиков Сергей', 'Кредитная карта', 100000, 'submitted', NULL),
+        ('app-007', 'emp-001', 'Морозова Ольга', 'Ипотека', 4200000, 'submitted', NULL)
+    ''');
+
+    // Insert employee benefits for emp-001
+    db.execute('''
+      INSERT INTO employee_benefits (id, employee_id, has_subscription, subscription_categories, bonus_percent,
+        has_mortgage, mortgage_remaining, mortgage_rate, mortgage_discount_percent, dms_compensation)
+      VALUES ('benefit-001', 'emp-001', 1, '["АЗС","Рестораны","Супермаркеты"]', 0.05,
+        1, 3500000, 0.12, 0.01, 18000)
+    ''');
+
+    // Insert monthly rating for emp-001 (March 2026)
+    db.execute('''
+      INSERT INTO monthly_ratings (id, employee_id, month, volume_fact, volume_plan, volume_index,
+        deals_fact, deals_plan, deals_index, bank_share_fact, bank_share_target, bank_share_index,
+        conversion_rate, conversion_index, total_score, level)
+      VALUES ('rating-month-001', 'emp-001', '2026-03', 8.0, 10.0, 80.0, 12, 10, 120.0,
+        35.0, 50.0, 70.0, 66.67, 66.67, 85.5, 'Gold')
+    ''');
+
+    // Insert monthly benefits for emp-001 (March 2026)
+    db.execute('''
+      INSERT INTO monthly_benefits (id, employee_id, month, bonus_income, mortgage_savings, dms_compensation,
+        total_monthly_benefit, year_total_benefit)
+      VALUES ('mb-001', 'emp-001', '2026-03', 5000, 2917, 1500, 9417, 9417)
     ''');
   }
 

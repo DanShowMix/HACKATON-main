@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'status_screen.dart';
 import 'rating_screen.dart';
+import 'new_rating_screen.dart';
 import 'daily_screen.dart';
 import 'notifications_screen.dart';
 import 'financial_effect_screen.dart';
@@ -366,7 +367,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Icons.analytics,
                     () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const RatingScreen()),
+                      MaterialPageRoute(builder: (_) => const NewRatingScreen()),
                     ),
                   ),
                 ),

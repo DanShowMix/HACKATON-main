@@ -148,6 +148,15 @@ class EmployeeRepository {
       updatedAt: DateTime.parse(row['updated_at'] as String),
     );
   }
+
+  /// Update employee level only
+  Future<void> updateLevel(String employeeId, String level) async {
+    final db = _db.database;
+    db.execute(
+      'UPDATE employees SET level = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [level, employeeId],
+    );
+  }
 }
 
 /// Repository for deal data operations
@@ -575,6 +584,266 @@ class MonthlyTaskRepository {
       deadline: row['deadline'] as String? ?? '',
       isCompleted: (row['is_completed'] as int) == 1,
       createdAt: DateTime.parse(row['created_at'] as String),
+    );
+  }
+}
+
+/// Repository for monthly plans
+class MonthlyPlanRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<MonthlyPlan?> getByEmployeeIdAndMonth(String employeeId, String month) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM monthly_plans WHERE employee_id = ? AND month = ?',
+      [employeeId, month],
+    );
+    if (results.isEmpty) return null;
+    return _rowToPlan(results.first);
+  }
+
+  Future<MonthlyPlan> create(MonthlyPlan plan) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO monthly_plans (id, employee_id, month, volume_plan, deals_plan, bank_share_target)
+      VALUES (?, ?, ?, ?, ?, ?)
+    ''', [
+      plan.id,
+      plan.employeeId,
+      plan.month,
+      plan.volumePlan,
+      plan.dealsPlan,
+      plan.bankShareTarget,
+    ]);
+    return plan;
+  }
+
+  MonthlyPlan _rowToPlan(Map<String, Object?> row) {
+    return MonthlyPlan(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      month: row['month'] as String,
+      volumePlan: (row['volume_plan'] as num).toDouble(),
+      dealsPlan: row['deals_plan'] as int,
+      bankShareTarget: (row['bank_share_target'] as num).toDouble(),
+    );
+  }
+}
+
+/// Repository for loan applications
+class LoanApplicationRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<List<LoanApplication>> getByEmployeeId(String employeeId) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM loan_applications WHERE employee_id = ? ORDER BY submitted_at DESC',
+      [employeeId],
+    );
+    return results.map(_rowToApplication).toList();
+  }
+
+  Future<LoanApplication> create(LoanApplication app) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO loan_applications (id, employee_id, client_name, product_type, amount, status, decided_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      app.id,
+      app.employeeId,
+      app.clientName,
+      app.productType,
+      app.amount,
+      app.status,
+      app.status != 'submitted' ? DateTime.now().toIso8601String() : null,
+    ]);
+    return app;
+  }
+
+  LoanApplication _rowToApplication(Map<String, Object?> row) {
+    return LoanApplication(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      clientName: row['client_name'] as String,
+      productType: row['product_type'] as String,
+      amount: (row['amount'] as num?)?.toDouble(),
+      status: row['status'] as String,
+    );
+  }
+}
+
+/// Repository for monthly ratings
+class MonthlyRatingRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<MonthlyRating?> getByEmployeeIdAndMonth(String employeeId, String month) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM monthly_ratings WHERE employee_id = ? AND month = ?',
+      [employeeId, month],
+    );
+    if (results.isEmpty) return null;
+    return _rowToRating(results.first);
+  }
+
+  Future<MonthlyRating> create(MonthlyRating rating) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO monthly_ratings (id, employee_id, month, volume_fact, volume_plan, volume_index,
+        deals_fact, deals_plan, deals_index, bank_share_fact, bank_share_target, bank_share_index,
+        conversion_rate, conversion_index, total_score, level)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      rating.id,
+      rating.employeeId,
+      rating.month,
+      rating.volumeFact,
+      rating.volumePlan,
+      rating.volumeIndex,
+      rating.dealsFact,
+      rating.dealsPlan,
+      rating.dealsIndex,
+      rating.bankShareFact,
+      rating.bankShareTarget,
+      rating.bankShareIndex,
+      rating.conversionRate,
+      rating.conversionIndex,
+      rating.totalScore,
+      rating.level,
+    ]);
+    return rating;
+  }
+
+  MonthlyRating _rowToRating(Map<String, Object?> row) {
+    return MonthlyRating(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      month: row['month'] as String,
+      volumeFact: (row['volume_fact'] as num).toDouble(),
+      volumePlan: (row['volume_plan'] as num).toDouble(),
+      volumeIndex: (row['volume_index'] as num).toDouble(),
+      dealsFact: row['deals_fact'] as int,
+      dealsPlan: row['deals_plan'] as int,
+      dealsIndex: (row['deals_index'] as num).toDouble(),
+      bankShareFact: (row['bank_share_fact'] as num).toDouble(),
+      bankShareTarget: (row['bank_share_target'] as num).toDouble(),
+      bankShareIndex: (row['bank_share_index'] as num).toDouble(),
+      conversionRate: (row['conversion_rate'] as num).toDouble(),
+      conversionIndex: (row['conversion_index'] as num).toDouble(),
+      totalScore: (row['total_score'] as num).toDouble(),
+      level: row['level'] as String,
+    );
+  }
+}
+
+/// Repository for employee benefits
+class EmployeeBenefitRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<EmployeeBenefit?> getByEmployeeId(String employeeId) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM employee_benefits WHERE employee_id = ?',
+      [employeeId],
+    );
+    if (results.isEmpty) return null;
+    return _rowToBenefit(results.first);
+  }
+
+  Future<EmployeeBenefit> create(EmployeeBenefit benefit) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO employee_benefits (id, employee_id, has_subscription, subscription_categories,
+        bonus_percent, has_mortgage, mortgage_remaining, mortgage_rate, mortgage_discount_percent, dms_compensation)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      benefit.id,
+      benefit.employeeId,
+      benefit.hasSubscription ? 1 : 0,
+      benefit.subscriptionCategories.join(','),
+      benefit.bonusPercent,
+      benefit.hasMortgage ? 1 : 0,
+      benefit.mortgageRemaining,
+      benefit.mortgageRate,
+      benefit.mortgageDiscountPercent,
+      benefit.dmsCompensation,
+    ]);
+    return benefit;
+  }
+
+  EmployeeBenefit _rowToBenefit(Map<String, Object?> row) {
+    final categoriesStr = row['subscription_categories'] as String?;
+    return EmployeeBenefit(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      hasSubscription: (row['has_subscription'] as int) == 1,
+      subscriptionCategories: categoriesStr != null && categoriesStr.isNotEmpty
+          ? categoriesStr.split(',').toList()
+          : [],
+      bonusPercent: (row['bonus_percent'] as num).toDouble(),
+      hasMortgage: (row['has_mortgage'] as int) == 1,
+      mortgageRemaining: (row['mortgage_remaining'] as num).toDouble(),
+      mortgageRate: (row['mortgage_rate'] as num).toDouble(),
+      mortgageDiscountPercent: (row['mortgage_discount_percent'] as num).toDouble(),
+      dmsCompensation: row['dms_compensation'] as int,
+    );
+  }
+}
+
+/// Repository for monthly benefits
+class MonthlyBenefitRepository {
+  final DatabaseHelper _db = DatabaseHelper.instance;
+
+  Future<MonthlyBenefit?> getByEmployeeIdAndMonth(String employeeId, String month) async {
+    final db = _db.database;
+    final results = db.select(
+      'SELECT * FROM monthly_benefits WHERE employee_id = ? AND month = ?',
+      [employeeId, month],
+    );
+    if (results.isEmpty) return null;
+    return _rowToMonthlyBenefit(results.first);
+  }
+
+  Future<int> getYearTotal(String employeeId, String year) async {
+    final db = _db.database;
+    final results = db.select(
+      '''SELECT SUM(total_monthly_benefit) as total FROM monthly_benefits 
+         WHERE employee_id = ? AND month LIKE ?''',
+      [employeeId, '$year%'],
+    );
+    if (results.isEmpty || results.first['total'] == null) return 0;
+    return (results.first['total'] as num).toInt();
+  }
+
+  Future<MonthlyBenefit> create(MonthlyBenefit benefit) async {
+    final db = _db.database;
+    db.execute('''
+      INSERT INTO monthly_benefits (id, employee_id, month, bonus_income, mortgage_savings,
+        dms_compensation, total_monthly_benefit, year_total_benefit)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', [
+      benefit.id,
+      benefit.employeeId,
+      benefit.month,
+      benefit.bonusIncome,
+      benefit.mortgageSavings,
+      benefit.dmsCompensation,
+      benefit.totalMonthlyBenefit,
+      benefit.yearTotalBenefit,
+    ]);
+    return benefit;
+  }
+
+  MonthlyBenefit _rowToMonthlyBenefit(Map<String, Object?> row) {
+    return MonthlyBenefit(
+      id: row['id'] as String,
+      employeeId: row['employee_id'] as String,
+      month: row['month'] as String,
+      bonusIncome: row['bonus_income'] as int,
+      mortgageSavings: row['mortgage_savings'] as int,
+      dmsCompensation: row['dms_compensation'] as int,
+      totalMonthlyBenefit: row['total_monthly_benefit'] as int,
+      yearTotalBenefit: row['year_total_benefit'] as int,
     );
   }
 }

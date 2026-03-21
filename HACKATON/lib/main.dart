@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/status_screen.dart';
 import 'screens/rating_screen.dart';
+import 'screens/new_rating_screen.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/achievements_screen.dart';
@@ -61,7 +62,8 @@ class DealerApp extends StatelessWidget {
       routes: {
         '/calculator': (context) => const CalculatorScreen(),
         '/status': (context) => const StatusScreen(),
-        '/rating': (context) => const RatingScreen(),
+        '/rating': (context) => const NewRatingScreen(),
+        '/rating-old': (context) => const RatingScreen(),
         '/achievements': (context) => const AchievementsScreen(),
         '/products': (context) => const ProductsScreen(),
         '/support': (context) => const SupportScreen(),

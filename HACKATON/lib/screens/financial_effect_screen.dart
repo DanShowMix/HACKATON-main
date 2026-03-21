@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/financial_effect.dart';
 import '../services/api_service.dart';
 
-/// Screen for displaying personal financial effect
+/// Screen for displaying personal financial effect (new calculation)
 class FinancialEffectScreen extends StatefulWidget {
   const FinancialEffectScreen({super.key});
 
@@ -82,10 +82,23 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main total benefit card
+          // Main total benefit card - YEAR TOTAL
           _buildTotalBenefitCard(),
           
           const SizedBox(height: 24),
+          
+          // Month info
+          Center(
+            child: Text(
+              'Месяц: ${_formatMonth(_effect!.month)} ${_effect!.period} года',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
           
           // Breakdown section
           const Text(
@@ -102,6 +115,7 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
           _buildBreakdownCard(
             'Доп. доход от бонусов',
             _effect!.bonusIncome,
+            'Подписка + категории трат',
             Icons.card_giftcard,
             Colors.orange,
           ),
@@ -111,6 +125,7 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
           _buildBreakdownCard(
             'Экономия по ипотеке',
             _effect!.mortgageSavings,
+            'Снижение ставки на 1%',
             Icons.home,
             Colors.blue,
           ),
@@ -118,31 +133,39 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
           const SizedBox(height: 12),
           
           _buildBreakdownCard(
-            'Кэшбэк',
-            _effect!.cashback,
-            Icons.monetization_on,
-            Colors.green,
-          ),
-          
-          const SizedBox(height: 12),
-          
-          _buildBreakdownCard(
-            'ДМС стоимость',
-            _effect!.dmsCost,
+            'ДМС компенсация',
+            _effect!.dmsCompensation,
+            'Годовая стоимость / 12',
             Icons.medical_services,
             Colors.red,
           ),
           
           const SizedBox(height: 24),
           
-          // Period info
-          Center(
-            child: Text(
-              'Период: ${_effect!.period} год',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+          // Monthly benefit info
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.shade200),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Выгода за месяц:',
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                ),
+                Text(
+                  _formatCurrency(_effect!.totalMonthlyBenefit),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -179,7 +202,7 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'в ${_effect!.period} году',
+            'нарастающим итогом в ${_effect!.period} году',
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 14,
@@ -187,7 +210,7 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _formatCurrency(_effect!.totalBenefit),
+            _formatCurrency(_effect!.yearTotalBenefit),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 36,
@@ -199,7 +222,13 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
     );
   }
 
-  Widget _buildBreakdownCard(String label, int amount, IconData icon, Color color) {
+  Widget _buildBreakdownCard(
+    String label,
+    int amount,
+    String description,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -231,6 +260,14 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
                   _formatCurrency(amount),
                   style: TextStyle(
                     fontSize: 18,
@@ -248,5 +285,18 @@ class _FinancialEffectScreenState extends State<FinancialEffectScreen> {
 
   String _formatCurrency(int amount) {
     return '${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} ₽';
+  }
+
+  String _formatMonth(String month) {
+    const months = [
+      '', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+    try {
+      final monthNum = int.parse(month.split('-')[1]);
+      return months[monthNum];
+    } catch (e) {
+      return month;
+    }
   }
 }
