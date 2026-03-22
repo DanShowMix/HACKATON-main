@@ -178,9 +178,12 @@ class ApiServer {
               bytes.addAll(chunk);
             }
             final body = String.fromCharCodes(bytes);
+            print('DEBUG: JSON body received: $body');
             final json = body.isNotEmpty ? jsonDecode(body) : null;
+            print('DEBUG: Parsed JSON: $json');
             request = request.change(context: {'body': json, 'rawBody': body});
           } catch (e) {
+            print('DEBUG: JSON parse error: $e');
             return Response.badRequest(body: jsonEncode({'error': 'Invalid JSON: $e'}));
           }
         }
