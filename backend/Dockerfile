@@ -15,9 +15,11 @@ COPY lib ./lib
 RUN dart compile exe bin/server.dart -o bin/server
 
 # Runtime image
-FROM alpine:3.19
+FROM debian:bookworm-slim
 
-RUN apk --no-cache add sqlite-libs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsqlite3-0 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
