@@ -37,10 +37,10 @@ class ApiServer {
 
     // Health check
     router.get('/api/health', (Request req) {
-      return Response.ok({
+      return Response.ok(jsonEncode({
         'status': 'ok',
         'timestamp': DateTime.now().toIso8601String(),
-      });
+      }), headers: {'Content-Type': 'application/json'});
     });
 
     // Auth routes
