@@ -19,7 +19,9 @@ FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libsqlite3-0 \
-    && rm -rf /var/lib/apt/lists/*
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/lib/x86_64-linux-gnu/libsqlite3.so.0 /usr/lib/x86_64-linux-gnu/libsqlite3.so
 
 WORKDIR /app
 
