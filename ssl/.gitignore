@@ -1,0 +1,8 @@
+# SSL certificates (generate on server)
+*.pem
+*.key
+*.crt
+
+# Let's Encrypt
+letsencrypt/
+acme/

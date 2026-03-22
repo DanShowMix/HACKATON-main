@@ -8,13 +8,15 @@ services:
       dockerfile: Dockerfile
     container_name: dealer-backend
     restart: unless-stopped
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     volumes:
-      - backend-data:/app/data
+      - ./backend/dealer.db:/app/dealer.db
+      - backend-logs:/app/logs
     environment:
       - PORT=8080
       - HOST=0.0.0.0
+      - ENVIRONMENT=production
     networks:
       - dealer-network
     healthcheck:
@@ -23,22 +25,25 @@ services:
       timeout: 10s
       retries: 3
 
-  # Flutter Web frontend (optional - backend can serve static files)
-  frontend:
-    build:
-      context: ./HACKATON
-      dockerfile: Dockerfile
-    container_name: dealer-frontend
+  # Nginx reverse proxy (serves Flutter Web + proxies API)
+  nginx:
+    image: nginx:alpine
+    container_name: dealer-nginx
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./HACKATON/build/web:/var/www/html
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
     networks:
       - dealer-network
 
 volumes:
-  backend-data:
+  backend-logs:
     driver: local
 
 networks:

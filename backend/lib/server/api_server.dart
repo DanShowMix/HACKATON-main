@@ -14,6 +14,8 @@ import '../handlers/notification_handler.dart';
 import '../handlers/product_handler.dart';
 import '../handlers/chat_handler.dart';
 import '../handlers/rating_handler.dart';
+import '../handlers/monthly_tasks_handler.dart';
+import '../handlers/new_rating_handler.dart';
 
 /// Main API server using Shelf framework
 class ApiServer {
@@ -35,10 +37,10 @@ class ApiServer {
 
     // Health check
     router.get('/api/health', (Request req) {
-      return Response.ok({
+      return Response.ok(jsonEncode({
         'status': 'ok',
         'timestamp': DateTime.now().toIso8601String(),
-      });
+      }), headers: {'Content-Type': 'application/json'});
     });
 
     // Auth routes
@@ -78,8 +80,17 @@ class ApiServer {
     router.get('/api/chat', ChatHandler.history);
     router.post('/api/chat', ChatHandler.send);
 
-    // Rating routes
-    router.get('/api/rating', RatingHandler.getDetails);
+    // Rating routes (new formula)
+    router.get('/api/rating', NewRatingHandler.getCurrentRating);
+    router.get('/api/rating/old', RatingHandler.getDetails);
+
+    // Financial effect routes (new calculation)
+    router.get('/api/financial-effect', NewRatingHandler.getFinancialEffect);
+
+    // Monthly tasks routes
+    router.get('/api/monthly-tasks', MonthlyTasksHandler.getTasks);
+    router.post('/api/monthly-tasks', MonthlyTasksHandler.createTask);
+    router.put('/api/monthly-tasks', MonthlyTasksHandler.updateTask);
 
     // Static files for Flutter Web
     router.get('/', (Request req) => _serveStaticFile('index.html'));
@@ -162,10 +173,17 @@ class ApiServer {
         final contentType = request.headers['content-type'];
         if (contentType != null && contentType.contains('application/json')) {
           try {
-            final body = await request.readAsString();
+            final bytes = <int>[];
+            await for (final chunk in request.read()) {
+              bytes.addAll(chunk);
+            }
+            final body = String.fromCharCodes(bytes);
+            print('DEBUG: JSON body received: $body');
             final json = body.isNotEmpty ? jsonDecode(body) : null;
+            print('DEBUG: Parsed JSON: $json');
             request = request.change(context: {'body': json, 'rawBody': body});
           } catch (e) {
+            print('DEBUG: JSON parse error: $e');
             return Response.badRequest(body: jsonEncode({'error': 'Invalid JSON: $e'}));
           }
         }

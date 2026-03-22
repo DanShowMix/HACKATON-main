@@ -15,17 +15,20 @@ COPY lib ./lib
 RUN dart compile exe bin/server.dart -o bin/server
 
 # Runtime image
-FROM alpine:3.19
+FROM debian:bookworm-slim
 
-RUN apk --no-cache add libsqlite3
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsqlite3-0 \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/lib/x86_64-linux-gnu/libsqlite3.so.0 /usr/lib/x86_64-linux-gnu/libsqlite3.so
 
 WORKDIR /app
 
 # Copy compiled binary
-COPY --from=backend-build /app/bin/server ./
-COPY --from=backend-build /app/.dart_tool/ ./
+COPY --from=backend-build /app/bin/server ./bin/server
 
 EXPOSE 8080
 
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["./bin/server"]
 CMD ["--host", "0.0.0.0", "--port", "8080"]

@@ -3,8 +3,11 @@ import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'status_screen.dart';
 import 'rating_screen.dart';
+import 'new_rating_screen.dart';
 import 'daily_screen.dart';
 import 'notifications_screen.dart';
+import 'financial_effect_screen.dart';
+import 'monthly_tasks_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -41,77 +44,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_employee == null) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              const Text('Ошибка загрузки данных'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadEmployeeData,
-                child: const Text('Попробовать снова'),
-              ),
-            ],
-          ),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text('Ошибка загрузки данных'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadEmployeeData,
+              child: const Text('Попробовать снова'),
+            ),
+          ],
         ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Дилер Партнёр'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _showLogoutDialog(context),
-            tooltip: 'Выйти',
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadEmployeeData,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Приветствие
-              _buildGreetingCard(_employee!),
-              const SizedBox(height: 16),
+    return RefreshIndicator(
+      onRefresh: _loadEmployeeData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Приветствие
+            _buildGreetingCard(_employee!),
+            const SizedBox(height: 16),
 
-              // Быстрые метрики
-              _buildQuickMetrics(_employee!),
-              const SizedBox(height: 16),
+            // Быстрые метрики
+            _buildQuickMetrics(_employee!),
+            const SizedBox(height: 16),
 
-              // Прогресс до следующего уровня
-              _buildLevelProgressCard(_employee!),
-              const SizedBox(height: 16),
+            // Прогресс до следующего уровня
+            _buildLevelProgressCard(_employee!),
+            const SizedBox(height: 16),
 
-              // Быстрые действия
-              _buildQuickActions(context),
-              const SizedBox(height: 16),
+            // Быстрые действия
+            _buildQuickActions(context),
+            const SizedBox(height: 16),
 
-              // Последние уведомления
-              _buildRecentNotifications(context),
-            ],
-          ),
+            // Последние уведомления
+            _buildRecentNotifications(context),
+          ],
         ),
       ),
     );
@@ -364,7 +344,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Icons.analytics,
                     () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const RatingScreen()),
+                      MaterialPageRoute(builder: (_) => const NewRatingScreen()),
                     ),
                   ),
                 ),
@@ -377,6 +357,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const StatusScreen()),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    'Фин. эффект',
+                    Icons.account_balance_wallet,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FinancialEffectScreen()),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildActionButton(
+                    context,
+                    'Задачи',
+                    Icons.task,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MonthlyTasksScreen()),
                     ),
                   ),
                 ),
@@ -476,35 +484,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Выход'),
-        content: const Text('Вы уверены, что хотите выйти из приложения?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ApiService().logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Выйти', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 }

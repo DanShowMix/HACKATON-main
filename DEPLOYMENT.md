@@ -2,269 +2,242 @@
 
 ## Overview
 
-This guide covers deploying the Dealer Partner Flutter Web application with Dart Shelf backend to a VPS server.
+Полная инструкция по развёртыванию приложения Dealer Partner на VPS с поддержкой HTTPS и APK.
 
 ## Architecture
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   Nginx (80)    │────▶│  Dart Backend    │────▶│   SQLite DB     │
-│   Flutter Web   │     │  (Shelf API)     │     │   (in-memory)   │
+│   Nginx (80/443)│────▶│  Dart Backend    │────▶│   SQLite DB     │
+│   Flutter Web   │     │  (Shelf API)     │     │   (file-based)  │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
+         │
+         └──────────────▶  APK (Android)
 ```
 
-## Prerequisites
+---
 
-- VPS with Ubuntu 20.04+ or Debian 11+
-- Domain name (optional, for HTTPS)
-- Root or sudo access
+## 📋 Prerequisites
 
-## Option 1: Docker Deployment (Recommended)
+- VPS с Ubuntu 20.04+ или Debian 11+
+- Доменное имя (для HTTPS)
+- Root или sudo доступ
 
-### Step 1: Install Docker
+---
+
+## 🚀 Quick Start (Docker Compose)
+
+### Шаг 1: Установка Docker на VPS
 
 ```bash
-# Update system
+# Подключись к VPS по SSH
+ssh user@your-vps-ip
+
+# Обновление системы
 sudo apt update && sudo apt upgrade -y
 
-# Install Docker
+# Установка Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# Add user to docker group
+# Добавление пользователя в группу docker
 sudo usermod -aG docker $USER
 newgrp docker
 
-# Install Docker Compose
+# Установка Docker Compose
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Verify installation
+# Проверка
 docker --version
 docker-compose --version
 ```
 
-### Step 2: Upload Project
+### Шаг 2: Загрузка проекта на VPS
 
+**Вариант A: Через Git**
 ```bash
-# Clone or upload your project
-scp -r D:\HACKATON-main\ user@your-vps-ip:/opt/dealer-app
-# Or use git
-git clone <your-repo-url> /opt/dealer-app
+cd /var/www
+sudo git clone https://github.com/DanShowMix/HACKATON-main.git dealer-app
+sudo chown -R $USER:$USER dealer-app
+cd dealer-app
+git checkout other_points
 ```
 
-### Step 3: Build and Run
-
+**Вариант B: Через SCP**
 ```bash
-cd /opt/dealer-app
-
-# Build Docker image
-docker build -t dealer-partner .
-
-# Run container
-docker run -d \
-  --name dealer-app \
-  -p 80:80 \
-  --restart unless-stopped \
-  dealer-partner
+# Локально (Windows PowerShell)
+scp -r D:\HACKATON-main\* user@vps-ip:/var/www/dealer-app
 ```
 
-### Step 4: Verify
+### Шаг 3: Сборка Flutter Web
 
 ```bash
-# Check container status
-docker ps
+cd /var/www/dealer-app/HACKATON
 
-# View logs
-docker logs -f dealer-app
+# Установка Flutter (если нет локально)
+# Лучше собрать локально и загрузить build/web
 
-# Test API
-curl http://localhost/api/health
-```
-
-## Option 2: Manual Deployment
-
-### Step 1: Install Dependencies
-
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Dart SDK
-sudo apt install -y apt-transport-https
-wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/dart.gpg
-echo 'deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main' | sudo tee /etc/apt/sources.list.d/dart_stable.list
-sudo apt update
-sudo apt install -y dart
-
-# Install Flutter (for web build)
-sudo apt install -y curl git unzip xz-utils zip
+# Или на VPS:
 git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter
 export PATH="$PATH:/opt/flutter/bin"
 
-# Install Nginx
-sudo apt install -y nginx
-
-# Install SQLite
-sudo apt install -y libsqlite3-dev sqlite3
-```
-
-### Step 2: Build Flutter Web
-
-```bash
-cd /opt/dealer-app/HACKATON
-export PATH="$PATH:/opt/flutter/bin"
 flutter pub get
 flutter build web --release
 ```
 
-### Step 3: Build Backend
+### Шаг 4: Настройка Nginx конфигурации
 
 ```bash
-cd /opt/dealer-app/backend
-dart pub get
-dart compile exe bin/server.dart -o bin/server
+cd /var/www/dealer-app
+
+# Копирование конфига
+cp nginx.conf /var/www/dealer-app/nginx.conf
+
+# Для HTTPS (после получения SSL)
+# Раскомментируй HTTPS секцию в nginx.conf
 ```
 
-### Step 4: Configure Nginx
+### Шаг 5: Запуск через Docker Compose
 
 ```bash
-sudo nano /etc/nginx/sites-available/dealer-app
+cd /var/www/dealer-app
+
+# Сборка и запуск
+docker-compose up -d --build
+
+# Проверка статуса
+docker-compose ps
+
+# Просмотр логов
+docker-compose logs -f
 ```
 
-Add this configuration:
+### Шаг 6: Проверка работы
+
+```bash
+# Health check
+curl http://localhost/api/health
+
+# Проверка веб-интерфейса
+curl http://localhost/
+```
+
+---
+
+## 🔒 HTTPS Setup (Let's Encrypt)
+
+### Шаг 1: Установка Certbot
+
+```bash
+sudo apt install -y certbot
+```
+
+### Шаг 2: Получение SSL сертификата
+
+```bash
+sudo certbot certonly --standalone -d твой-домен.ru -d www.твой-домен.ru
+```
+
+### Шаг 3: Настройка SSL в nginx.conf
+
+Открой `nginx.conf` и раскомментируй HTTPS секцию:
 
 ```nginx
 server {
-    listen 80;
-    server_name your-domain.com;
+    listen 443 ssl http2;
+    server_name твой-домен.ru;
 
-    root /opt/dealer-app/HACKATON/build/web;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /api {
-        proxy_pass http://localhost:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
+    ssl_certificate /etc/nginx/ssl/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+    # ... остальная конфигурация
 }
 ```
 
-Enable the site:
+### Шаг 4: Копирование сертификатов
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/dealer-app /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+sudo mkdir -p /var/www/dealer-app/ssl
+sudo cp /etc/letsencrypt/live/твой-домен.ru/fullchain.pem /var/www/dealer-app/ssl/
+sudo cp /etc/letsencrypt/live/твой-домен.ru/privkey.pem /var/www/dealer-app/ssl/
+sudo cp /etc/letsencrypt/live/твой-домен.ru/chain.pem /var/www/dealer-app/ssl/
+
+# Перезапуск Nginx
+docker-compose restart nginx
 ```
 
-### Step 5: Create Systemd Service
+### Шаг 5: Авто-обновление сертификата
 
 ```bash
-sudo nano /etc/systemd/system/dealer-backend.service
+# Добавь в crontab
+sudo crontab -e
+
+# Добавь строку:
+0 3 1 * * certbot renew --quiet && docker-compose restart nginx
 ```
 
-Add this content:
+---
 
-```ini
-[Unit]
-Description=Dealer Partner Backend API
-After=network.target
+## 📱 APK Сборка
 
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/opt/dealer-app/backend
-ExecStart=/opt/dealer-app/backend/bin/server --host 127.0.0.1 --port 8080
-Restart=always
-RestartSec=5
+### Шаг 1: Изменение API URL
 
-[Install]
-WantedBy=multi-user.target
+В файле `HACKATON/lib/services/api_service.dart`:
+
+```dart
+String _baseUrl = kReleaseMode
+    ? 'https://твой-домен.ru/api'  // Твой VPS
+    : 'http://localhost:8080/api';
 ```
 
-Enable and start the service:
+### Шаг 2: Сборка APK
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable dealer-backend
-sudo systemctl start dealer-backend
-sudo systemctl status dealer-backend
+cd HACKATON
+
+# Для ARM (большинство телефонов)
+flutter build apk --release
+
+# Или универсальный APK
+flutter build apk --split-per-abi
 ```
 
-### Step 6: Test
+APK будет в: `build/app/outputs/flutter-apk/app-release.apk`
 
-```bash
-# Test Flutter Web
-curl http://localhost/
+### Шаг 3: Разрешение HTTP трафика (если нет HTTPS)
 
-# Test Backend API
-curl http://localhost/api/health
-curl http://localhost/api/employee
+В `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<application
+    android:usesCleartextTraffic="true"
+    ...>
 ```
 
-## Option 3: Docker Compose (Separate Containers)
+---
+
+## 📊 Monitoring & Logs
+
+### Просмотр логов
 
 ```bash
-cd /opt/dealer-app
-docker-compose up -d --build
-```
+# Все логи
+docker-compose logs -f
 
-## HTTPS Setup (Optional but Recommended)
+# Только backend
+docker-compose logs -f backend
 
-### Using Let's Encrypt
-
-```bash
-# Install Certbot
-sudo apt install -y certbot python3-certbot-nginx
-
-# Get certificate
-sudo certbot --nginx -d your-domain.com
-
-# Auto-renewal is configured automatically
-# Test renewal
-sudo certbot renew --dry-run
-```
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| PORT | 8080 | Backend API port |
-| HOST | 0.0.0.0 | Backend API host |
-
-## Monitoring
-
-### View Logs
-
-```bash
-# Backend logs (Docker)
-docker logs -f dealer-app
-
-# Backend logs (Systemd)
-sudo journalctl -u dealer-backend -f
-
-# Nginx logs
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
+# Только nginx
+docker-compose logs -f nginx
 ```
 
 ### Health Check
 
 ```bash
-curl http://localhost/api/health
+curl https://твой-домен.ru/api/health
 ```
 
-Expected response:
+Ожидаемый ответ:
 ```json
 {
   "status": "ok",
@@ -272,112 +245,115 @@ Expected response:
 }
 ```
 
-## Backup
+---
 
-### Database Backup
+## 🗄️ Database
 
-Since SQLite is in-memory, data is reset on restart. For production, modify `database_helper.dart` to use a file:
+База данных SQLite хранится в `backend/dealer.db` и сохраняется через volume.
 
-```dart
-final db = sqlite3.open('/app/data/dealer.db');
-```
-
-Then backup:
+### Backup базы данных
 
 ```bash
-# Backup database
-cp /app/data/dealer.db /backup/dealer-$(date +%Y%m%d).db
+# Создать backup
+cp /var/www/dealer-app/backend/dealer.db /backup/dealer-$(date +%Y%m%d).db
 
-# Backup entire app
-tar -czf /backup/dealer-app-$(date +%Y%m%d).tar.gz /opt/dealer-app
+# Автоматизация (cron)
+0 2 * * * cp /var/www/dealer-app/backend/dealer.db /backup/dealer-$(date +\%Y\%m\%d).db
 ```
 
-## Troubleshooting
+---
 
-### Port Already in Use
+## 🔧 Troubleshooting
+
+### Порт уже занят
 
 ```bash
-# Find process using port 8080
-sudo lsof -i :8080
+# Найти процесс
+sudo lsof -i :80
 
-# Kill process
-sudo kill -9 <PID>
+# Остановить контейнеры
+docker-compose down
+
+# Запустить заново
+docker-compose up -d
 ```
 
-### Permission Issues
+### Ошибки сборки Flutter
 
 ```bash
-# Fix ownership
-sudo chown -R www-data:www-data /opt/dealer-app
-
-# Fix permissions
-sudo chmod -R 755 /opt/dealer-app
+cd HACKATON
+flutter clean
+flutter pub get
+flutter build web
 ```
 
-### Service Won't Start
+### Backend не запускается
 
 ```bash
-# Check logs
-sudo journalctl -u dealer-backend -n 50
+# Проверь логи
+docker-compose logs backend
 
-# Test binary manually
-/opt/dealer-app/backend/bin/server --help
+# Пересобери
+docker-compose build backend
+docker-compose up -d backend
 ```
 
-## API Endpoints
+### Нет доступа к API из APK
+
+1. Проверь что URL в `api_service.dart` правильный
+2. Проверь firewall на VPS:
+   ```bash
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+   sudo ufw allow 22/tcp
+   ```
+3. Проверь что HTTPS работает:
+   ```bash
+   curl https://твой-домен.ru/api/health
+   ```
+
+---
+
+## 📝 API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /api/health | Health check |
-| POST | /api/auth/login | Login with Sber ID |
-| POST | /api/auth/logout | Logout |
-| GET | /api/employee | Get employee profile |
-| GET | /api/deals | List deals |
-| POST | /api/deals | Create deal |
-| GET | /api/daily/today | Get today's results |
-| POST | /api/daily | Submit daily results |
-| GET | /api/achievements | List achievements |
-| GET | /api/notifications | List notifications |
-| GET | /api/products | List products |
-| GET | /api/chat | Get chat history |
-| POST | /api/chat | Send message |
-| GET | /api/rating | Get rating details |
+| GET | /api/health | Проверка здоровья |
+| POST | /api/auth/login | Вход |
+| POST | /api/auth/register | Регистрация |
+| GET | /api/employee | Профиль сотрудника |
+| GET | /api/rating | Рейтинг (новая формула) |
+| GET | /api/financial-effect | Фин. эффект |
+| GET | /api/monthly-tasks | Задачи месяца |
+| GET | /api/deals | Сделки |
+| POST | /api/deals | Создать сделку |
+| GET | /api/daily/today | Итоги дня |
+| POST | /api/daily | Внести итоги дня |
+| GET | /api/achievements | Достижения |
+| GET | /api/notifications | Уведомления |
+| GET | /api/products | Продукты |
+| GET | /api/chat | Чат |
+| POST | /api/chat | Отправить сообщение |
 
-## Security Recommendations
+---
 
-1. **Enable HTTPS** - Use Let's Encrypt for free SSL certificates
-2. **Firewall** - Only allow ports 80, 443, and SSH
-3. **Regular Updates** - Keep system packages updated
-4. **Backup** - Regular automated backups
-5. **Monitoring** - Set up monitoring and alerts
+## ✅ Checklist перед запуском
 
-## Performance Tuning
+- [ ] Docker установлен
+- [ ] Проект загружен на VPS
+- [ ] Flutter Web собран (`build/web`)
+- [ ] `nginx.conf` настроен
+- [ ] Домен указывает на VPS
+- [ ] SSL сертификат получен (для HTTPS)
+- [ ] APK собран с правильным URL
+- [ ] Firewall настроен (80, 443, 22)
+- [ ] Логи в порядке
 
-### Nginx Optimization
+---
 
-```nginx
-# Add to nginx config
-gzip on;
-gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
-gzip_min_length 1000;
+## 🆘 Support
 
-# Cache static assets
-location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
-    expires 1y;
-    add_header Cache-Control "public, immutable";
-}
-```
-
-### Backend Optimization
-
-For high load, consider:
-- Using PostgreSQL instead of SQLite
-- Adding Redis for caching
-- Horizontal scaling with load balancer
-
-## Support
-
-For issues or questions:
-1. Check logs first
-2. Review API documentation
-3. Contact technical support
+При проблемах:
+1. Проверь логи: `docker-compose logs -f`
+2. Проверь health endpoint: `curl https://твой-домен.ru/api/health`
+3. Проверь что все контейнеры запущены: `docker-compose ps`

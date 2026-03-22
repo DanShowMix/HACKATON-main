@@ -4,11 +4,15 @@ import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/status_screen.dart';
 import 'screens/rating_screen.dart';
+import 'screens/new_rating_screen.dart';
 import 'screens/calculator_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/achievements_screen.dart';
 import 'screens/products_screen.dart';
 import 'screens/support_screen.dart';
+import 'screens/financial_effect_screen.dart';
+import 'screens/monthly_tasks_screen.dart';
+import 'screens/notifications_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,16 +57,19 @@ class DealerApp extends StatelessWidget {
           ),
         ),
       ),
-      home: ApiService().isAuthenticated 
-          ? const MainNavigation() 
+      home: ApiService().isAuthenticated
+          ? const MainNavigation()
           : const LoginScreen(),
       routes: {
         '/calculator': (context) => const CalculatorScreen(),
         '/status': (context) => const StatusScreen(),
-        '/rating': (context) => const RatingScreen(),
+        '/rating': (context) => const NewRatingScreen(),
+        '/rating-old': (context) => const RatingScreen(),
         '/achievements': (context) => const AchievementsScreen(),
         '/products': (context) => const ProductsScreen(),
         '/support': (context) => const SupportScreen(),
+        '/financial-effect': (context) => const FinancialEffectScreen(),
+        '/monthly-tasks': (context) => const MonthlyTasksScreen(),
       },
     );
   }
@@ -77,6 +84,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  String _currentTitle = 'Главная';
 
   final List<Widget> _screens = const [
     DashboardScreen(),
@@ -86,16 +94,46 @@ class _MainNavigationState extends State<MainNavigation> {
     ProfileScreen(),
   ];
 
+  final List<String> _titles = const [
+    'Главная',
+    'Сделки',
+    'Достижения',
+    'Поддержка',
+    'Профиль',
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(_currentTitle),
+        actions: [
+          if (_selectedIndex == 0) ...[
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              ),
+            ),
+          ],
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => _showLogoutDialog(context),
+            tooltip: 'Выйти',
+          ),
+        ],
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+        onDestinationSelected: (index) => setState(() {
+          _selectedIndex = index;
+          _currentTitle = _titles[index];
+        }),
         elevation: 8,
         shadowColor: Colors.black26,
         destinations: const [
@@ -123,6 +161,35 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Профиль',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Выход'),
+        content: const Text('Вы уверены, что хотите выйти из приложения?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ApiService().logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            child: const Text('Выйти', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
