@@ -17,7 +17,7 @@ RUN dart compile exe bin/server.dart -o bin/server
 # Runtime image
 FROM alpine:3.19
 
-RUN apk --no-cache add libsqlite3
+RUN apk --no-cache add sqlite-libs
 
 WORKDIR /app
 
