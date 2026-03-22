@@ -173,7 +173,10 @@ class ApiServer {
         final contentType = request.headers['content-type'];
         if (contentType != null && contentType.contains('application/json')) {
           try {
-            final bytes = await request.read().toList();
+            final bytes = <int>[];
+            await for (final chunk in request.read()) {
+              bytes.addAll(chunk);
+            }
             final body = String.fromCharCodes(bytes);
             final json = body.isNotEmpty ? jsonDecode(body) : null;
             request = request.change(context: {'body': json, 'rawBody': body});
