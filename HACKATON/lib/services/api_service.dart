@@ -9,10 +9,10 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
-  // Backend server URL - change for production
-  String _baseUrl = kReleaseMode 
-      ? '' // Same origin in production (served by backend)
-      : 'http://localhost:8080/api';
+  // Backend server URL - production VPS
+  String _baseUrl = kReleaseMode
+      ? 'http://194.113.106.120/api' // Production VPS (HTTP for testing)
+      : 'http://localhost:8080/api'; // Development
 
   bool _isAuthenticated = false;
   Map<String, dynamic>? _currentUser;
@@ -32,7 +32,7 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       final userJson = prefs.getString('current_user');
-      
+
       if (token != null && userJson != null) {
         _isAuthenticated = true;
         _currentUser = jsonDecode(userJson) as Map<String, dynamic>;
@@ -65,9 +65,7 @@ class ApiService {
   }
 
   /// Get headers for authenticated requests
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-  };
+  Map<String, String> get _headers => {'Content-Type': 'application/json'};
 
   /// Generic HTTP GET
   Future<dynamic> _get(String endpoint) async {
@@ -314,13 +312,17 @@ class ApiService {
   }
 
   /// Create monthly task
-  Future<Map<String, dynamic>> createMonthlyTask(Map<String, dynamic> task) async {
+  Future<Map<String, dynamic>> createMonthlyTask(
+    Map<String, dynamic> task,
+  ) async {
     final result = await _post('/monthly-tasks', task);
     return result as Map<String, dynamic>;
   }
 
   /// Update monthly task
-  Future<Map<String, dynamic>> updateMonthlyTask(Map<String, dynamic> task) async {
+  Future<Map<String, dynamic>> updateMonthlyTask(
+    Map<String, dynamic> task,
+  ) async {
     final result = await _put('/monthly-tasks', task);
     return result as Map<String, dynamic>;
   }
